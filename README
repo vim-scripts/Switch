@@ -1,0 +1,14 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=2214
+
+This plugin  enables you  to toggle  any Vim boolean  options between  'on' and 'off' using just one key mapping for each of tree possible vim modes.
+
+Basic usage:
+
+<C-Q> {optkey} Toggle an option.
+<C-Q> <Tab> Print the options list.
+<C-Q> <F1> Print help on usage, similar to this paragraph.
+<C-Q> <C-Q> {optkey} Print the current value of an option.
+<C-Q> <CR> {optkey} Invoke :help on an option.
+
+
+* This plugin is related to the Univrc project (http://univrc.org)
