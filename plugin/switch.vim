@@ -1,12 +1,14 @@
-"        name: switch
-"     summary: quickly toggle boolean options
-"     version: 0.9
+"        name: Switch
+"     summary: Quickly toggle boolean options between 'on' and 'off'
+"     version: 0.9.1
 "     license: GPL
-"    requires: vim 7+
-" last change: 12 April 2008
+"    requires: Vim 7+
+"   script id: 2214
+" last change: 14 April 2008
 "   developer: Tomas RC
-"     project: univrc <org>
+"     project: Univrc
 "       email: univrc@gmail.com
+"        site: http://univrc.org
 "
 "         use: # list of switch keys : <C-Q><Space>
 "              # switch action       : <C-Q>{key}
@@ -17,34 +19,54 @@
     :finish
 :endif
 :let g:loaded_switch = 1
-:let s:toggle_switch = 0
 "--------------------------------------------------------------------------<
  
 " {{{1 [config]         *         
 "-------------------------------------------------------------------------->
-:if  !exists("g:pre{'Switch'}{'SwitchDict'}")
-:let g:pre{'Switch'}{'SwitchDict'} =  { 'C'  : 'cursorcolumn'
-                                     \, 'F'  : 'rightleft'
-                                     \, 'L'  : 'cursorline'
-                                     \, 'M'  : 'showmode'
-                                     \, 'R'  : 'revins'
-                                     \, 'S'  : 'showcmd'
-                                     \, 'W'  : 'wrapscan'
-                                     \, 'a'  : 'showmatch'
-                                     \, 'b'  : 'linebreak'
-                                     \, 'e'  : 'errorbells'
-                                     \, 'f'  : 'foldenable'
-                                     \, 'h'  : 'hlsearch'
-                                     \, 'i'  : 'incsearch'
-                                     \, 'l'  : 'list'
-                                     \, 'm'  : 'modifiable'
-                                     \, 'n'  : 'number'
-                                     \, 'o'  : 'readonly'
-                                     \, 'p'  : 'paste'
-                                     \, 'r'  : 'ruler'
-                                     \, 't'  : 'title'
-                                     \, 'v'  : 'visualbell'
-                                     \, 'w'  : 'wrap'
+:if  !exists("g:prev_{'Switch'}_{'Dict'}")
+:let g:prev_{'Switch'}_{'Dict'} =  { 'A'  : 'autochdir'
+                                 \, 'B'  : 'scrollbind'
+                                 \, 'C'  : 'cursorcolumn'
+                                 \, 'D'  : 'digraph'
+                                 \, 'E'  : 'expandtab'
+                                 \, 'F'  : 'rightleft'
+                                 \, 'G'  : 'magic'
+                                 \, 'H'  : 'hidden'
+                                 \, 'I'  : 'infercase'
+                                 \, 'K'  : 'writebackup'
+                                 \, 'L'  : 'cursorline'
+                                 \, 'M'  : 'showmode'
+                                 \, 'N'  : 'icon'
+                                 \, 'O'  : 'confirm'
+                                 \, 'P'  : 'wrapscan'
+                                 \, 'R'  : 'autoread'
+                                 \, 'S'  : 'showcmd'
+                                 \, 'U'  : 'autoindent'
+                                 \, 'V'  : 'revins'
+                                 \, 'W'  : 'autowrite'
+                                 \, 'a'  : 'showmatch'
+                                 \, 'b'  : 'linebreak'
+                                 \, 'c'  : 'cindent'
+                                 \, 'd'  : 'diff'
+                                 \, 'e'  : 'errorbells'
+                                 \, 'f'  : 'foldenable'
+                                 \, 'g'  : 'ignorecase'
+                                 \, 'h'  : 'hlsearch'
+                                 \, 'i'  : 'incsearch'
+                                 \, 'j'  : 'joinspaces'
+                                 \, 'k'  : 'backup'
+                                 \, 'l'  : 'list'
+                                 \, 'm'  : 'modifiable'
+                                 \, 'n'  : 'number'
+                                 \, 'o'  : 'readonly'
+                                 \, 'p'  : 'paste'
+                                 \, 'r'  : 'ruler'
+                                 \, 's'  : 'spell'
+                                 \, 't'  : 'title'
+                                 \, 'u'  : 'secure'
+                                 \, 'v'  : 'visualbell'
+                                 \, 'w'  : 'wrap'
+                                 \, 'z'  : 'lazyredraw'
                                    \}
 :endif
 "--------------------------------------------------------------------------<
@@ -53,25 +75,34 @@
 :function! <SID>Load_SwitchSys()
     " {{{2 :let
 "-------------------------------------------------------------------------->
-:let s:sys = g:pre{'Switch'}{'SwitchDict'}
+:let s:sys = g:prev_{'Switch'}_{'Dict'}
 "--------------------------------------------------------------------------<
   
     " {{{2 :fun
 "-------------------------------------------------------------------------->
 :function! <SID>Switch()
     :echo ":switch "
+    :let l:list = []
     :let l:flag = nr2char(getchar())
     :if   l:flag == ' '
-        :echo "[switch.vim] Dictionary of Toggle Options: "
+        :echo "[switch.vim]"
+        :echo "==== Dictionary of boolean options ===="
+        :echo " "
         :for l:entry in items(s:sys)
-            :echo l:entry[0] " : " l:entry[1]
+            :call add(l:list, [l:entry[1], l:entry[0]])
         :endfor
+        :call sort(l:list)
+        :for l:entry in l:list
+            :echo "          " l:entry[1] " : " l:entry[0]
+        :endfor
+        :echo " "
+        :echo " "
         :call getchar()
     :else
         :if exists("s:sys[l:flag]")
             :let l:setting = s:sys[l:flag]
         :else
-            :echo "Given key not found in flag settings dictionary!"
+            :echo "Given key not found in the boolean options dictionary!"
             :return
         :endif
         :execute ":let l:value=&".l:setting
@@ -81,7 +112,7 @@
             :else            | :echon l:setting."! [OFF]" 
             :endif 
         :else
-            :echo 'Unknown Toggle Option:' l:setting
+            :echo 'Unknown boolean option:' l:setting
             :return 1
         :endif
     :endif
@@ -98,7 +129,7 @@
 " {{{1 [handle]                   
 "-------------------------------------------------------------------------->
 :call <SID>Load_SwitchSys()
-:unlet g:pre{'Switch'}{'SwitchDict'}
+:unlet g:prev_{'Switch'}_{'Dict'}
 "--------------------------------------------------------------------------<
 " }}}1
 
