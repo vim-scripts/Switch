@@ -1,10 +1,10 @@
 "         name: Switch
 "      summary: Quickly toggle boolean options between 'on' and 'off'
-"      version: 0.11
+"      version: 0.12
 "      license: GPL
 "     requires: Vim 7+
 "    script id: 2214
-"  last change: 2008 Jul 26
+"  last change: 2008 Jul 30
 "      creator: Tomas RC
 " co-developer: Andy Wokula   
 "      project: Univrc
@@ -16,7 +16,7 @@
 
 " {{{1 [comments]                 
     " {{{2 [changes]                  
-        " {{{3 2008 Jul 07  \A/           
+        " {{{3 2008 Jul 07  \A/  v. 0.10  
 "   Andy Wokula <anwoku@yahoo.de>
 "
 " Added: Added <C-Q><Tab>, which is more  intuitive.  If I look for completions
@@ -76,7 +76,7 @@
 "
 " ... some more ...
         " }}}3
-        " {{{3     2008 Jul 26                
+        " {{{3     2008 Jul 26       v. 0.11  
 " Added:  The switch functionality now  works, optionally, in visual and insert
 " modes as  well.  Note  that switch.vim  uses one  mapping for  each activated
 " mode.  The  default mapping key is  <C-Q> (Ctrl-q).  The mapping  keys can be
@@ -95,91 +95,88 @@
 " except for the mapping keys, now lies in the [user config] section.
 "
         " }}}3
+        " {{{3     2008 Jul 30       v. 0.12  
+" Added: Now the map keys can also be defined in the 'user config' section.
+" They can be easily defined in any of the following fashions: 
+"
+"    if !exists("g:switch_map_keys") 
+"        let g:switch_map_keys  = {  'normal' : ""
+"                                 \, 'insert' : "<C-Q>"
+"                                 \, 'visual' : "_" }
+"
+" Thanks to godlygeek for the " eval('"'.'\'.map.'"') " solution.
+"
+" Fixed: One global variable was not being removed.
+"
+        " }}}3
 
     " {{{2 [documentation]            
 
 " This plugin  enables you  to toggle  any Vim boolean  options between  'on' and
-" 'off'  using just  one  key mapping  for  each working  mode.   That works,  by
-" default, in three different modes (normal, visual and insert), using three maps
-" (if free).
+" 'off' using just one key mapping for each working mode. That works, by default,
+" in three  different modes  (normal, visual  and insert),  using three  maps (if
+" free).
 " 
-" How to use it:
-" 	Two lines quick guide:
+" How to use it
+"     Two lines quick guide
+"         * get help : <C-Q><Tab>
+"         * toggle : <C-Q>{key} | where key is a printable character 
 " 
-" 	# get help : <C-Q><Tab>
-" 	# toggle   : <C-Q>{key} | where key is a printable character
+"     Five lines quick guide
+"         By default, the map key is  (<C-Q>). Following the map key, 
+"         * a character toggles the value of the boolean option it represents
+"         * <Tab> or <Space> prints the available key-option pairs
+"         * <F1> + character opens the help on the page of its pair option
+"         * <Esc> escapes 
 " 
-" 	Five lines quick guide:
-" 
-" 	By default, the map key is <C-Q>. Following the map key,
-" 	# a single character toggles the value of the boolean option it represents
-" 	# <Tab> or <Space> prints the available key-option pairs
-" 	# <F1> + character quickly opens the help on the page of its pair option
-" 	# <Esc> escapes
-" 
-" How to configure it:
-" 
-"     Mappings:
-" 
-"     All user configurable definitions are present in the 'user config' section,
-"     except for  the mapping keys.  The  default mapping key is  <C-Q> (Ctrl-q),
-"     but it can be changed in the [setting up] -> [mappings] section, in each of
-"     the following three lines:
-" 
-"              - nmap <silent> <C-Q> <Plug>SwitchOption
-"              - imap <silent> <C-Q> <Plug>SwitchOption
-"              - xmap <silent> <C-Q> <Plug>SwitchOption
-" 
-" 
-"     Variables:
-" 
-"     The following configurable variables are  concentrated in the 'user config'
+" How to configure it
+"     All  user configurable  definitions are  present in  the 'user  config'
 "     section and can be also defined in your .vimrc, if wanted:
-" 
-" 	    # g:switch_options	      (string)	   Default : ""
-" 	    # g:switch_help_header    (boolean)    Default : 1
-" 	    # g:switch_help_leftalign (boolean)    Default : 0
-" 	    # g:switch_map_modes      (dictionary) Default : [entry value]: 1
-" 
-" 	* g:switch_options (string) Default: ""
+"     
+"             1. g:switch_options (string) Default : ""
+"             2. g:switch_help_header (boolean) Default : 1
+"             3. g:switch_help_leftalign (boolean) Default : 0
+"             4. g:switch_map_modes (dictionary) Default (value entry): 1 
+"             5. g:switch_map_keys (dictionary) Default (value entry): 1 
+"             6. g:switch_default (string)
+"
+"         1. g:switch_options (string) Default: ""
 " 
 "             It  customizes the  existent  key-option pairs. It  can have  three
 "             different meanings:
+"                 * "" : Use the default set of key-option pairs
+"                 * "L:cursorline" : Use exclusively the two defined pairs
+"                 * "., l:list" : Use the default set (.) plus the two pairs. 
 " 
-" 				# ""             : Use the default set of key-option pairs
-" 				# "L:cursorline" : Use exclusively the two defined pairs
-" 				# "., l:list"    : Use the default set (.) plus the two pairs. 
+"         Example: let g:switch_options = "., e:expandtab, k" 
+"         With ".," at  the begin, start with the  default set. Following entries
+"         either add/replace "key:option"  pairs or remove keys  if the ":option"
+"         part is missing. Separator is "," followed by optional white space. The
+"         example makes <C-Q>e toggle 'expandtab' and <C-Q>k raise an error. (bad
+"         example, "e" already is in the defaults).
 " 
-" 		    Example: let g:switch_options = "., e:expandtab, k"
+"         2. g:switch_help_header (boolean) Default: 1
+"             If on, show header lines. 
 " 
-"             With  ".," at  the begin,  start with  the default  set.  Following
-"             entries either add/replace "key:option" pairs or remove keys if the
-"             ":option" part is  missing.  Separator is ","  followed by optional
-"             white  space.   The example  makes  <C-Q>e  toggle 'expandtab'  and
-"             <C-Q>k  raise  an  error.  (bad  example, "e"  already  is  in  the
-"             defaults).
-" 
-" 	* g:switch_help_header (boolean) Default: 1. 
-" 		
-"             If 1, show header lines.
-" 
-" 	* g:switch_help_leftalign (boolean) Default: 0
-" 
+"         3. g:switch_help_leftalign (boolean) Default: 0
 "             If off, make displaying the options look more like centering (about
 "             1/3 of white space before, 2/3 after).
 " 
-" 	* g:switch_map_modes (dictionary) Default [entry value]: 1
-" 
+"         4. g:switch_map_modes (dictionary) Default (value entry): 1
 "             Define in which Vim modes the plugin will by operational Each entry
 "             key is a  Vim mode and each  value is a boolean  that authorizes or
 "             not the activation of pair mode.
 " 
+"         5. g:switch_map_keys (dictionary) Default (value entry): 1
+"             Define the mapping key for each of the three operating modes.
 " 
-" To see the list of the available boolean options type :set inv<C-D>
+"         6. g:switch_default (string) 
+"             Define the default pairs char:option.
 "
-" Lots of thanks to Andy Wokula, who made this humble plugin much nicer.
-"
-" This plugin is related to the Univrc project (http://univrc.org)
+" 
+" ? To see the list of the available boolean options type :set inv<C-D>
+" ! Lots of thanks to Andy Wokula, who made this humble plugin much nicer
+" @ This plugin is related to the Univrc project (http://univrc.org)
 
     "}}}2
 
@@ -208,13 +205,19 @@ if !exists("g:switch_help_leftalign")
 endif
 
 if !exists("g:switch_map_modes")
-    let g:switch_map_modes = { 'normal' : 1,
-                             \ 'insert' : 1,
-                             \ 'visual' : 1 }
+    let g:switch_map_modes = {  'normal' : 1
+                             \, 'insert' : 1
+                             \, 'visual' : 1 }
 endif
 
-if !exists("g:switch_defaults")
-    let g:switch_defaults = 
+if !exists("g:switch_map_keys") 
+    let g:switch_map_keys  = {  'normal' : "<C-Q>"
+                             \, 'insert' : "<C-Q>"
+                             \, 'visual' : "<C-Q>" }
+endif
+
+if !exists("g:switch_default")
+    let g:switch_default = 
             \ "A:autochdir, B:scrollbind, C:cursorcolumn, H:hidden"
             \.", I:infercase, L:cursorline, M:showmode, P:wrapscan"
             \.", R:autoread, S:showcmd, W:autowrite, a:autoindent"
@@ -225,9 +228,10 @@ endif
 
 " {{{1 [setting up]               
     " {{{2 [variables]                   
-let s:defaults       = g:switch_defaults
+let s:defaults       = g:switch_default
 let s:options        = g:switch_options
 let s:map_modes      = g:switch_map_modes
+let s:map_keys       = g:switch_map_keys 
 let s:help_header    = g:switch_help_header
 let s:help_leftalign = g:switch_help_leftalign
 " remember the previous g:switch_options value to avoid redundant updates:
@@ -237,18 +241,18 @@ let s:old_options = "~(_8(I)"
 
 if !hasmapto("<Plug>SwitchOption","nvic") 
     if s:map_modes.normal == 1  
-        nmap <silent> <C-Q> <Plug>SwitchOption
+        exe "nmap <silent> ".s:map_keys['normal']." <Plug>SwitchOption"
     endif
     if s:map_modes.insert == 1  
-        imap <silent> <C-Q> <Plug>SwitchOption
+        exe "imap <silent> ".s:map_keys['insert']." <Plug>SwitchOption"
     endif
     if s:map_modes.visual == 1  
-        xmap <silent> <C-Q> <Plug>SwitchOption
+        exe "xmap <silent> ".s:map_keys['visual']." <Plug>SwitchOption"
     endif
 
-    nnoremap <Plug>SwitchOption :<C-U>call <SID>Switch()<CR>
-    inoremap <Plug>SwitchOption <C-O>:<C-U>call <SID>Switch()<CR>
-    xnoremap <Plug>SwitchOption <ESC>:<C-U>call <SID>Switch()<BAR>:normal gv<CR>
+    nnoremap <Plug>SwitchOption :<C-U>call <SID>Switch('normal')<CR>
+    inoremap <Plug>SwitchOption <C-O>:<C-U>call <SID>Switch('insert')<CR>
+    xnoremap <Plug>SwitchOption <ESC>:<C-U>call <SID>Switch('visual')<BAR>:normal gv<CR>
 endif
 
     " }}}2
@@ -351,13 +355,14 @@ func! Switch_PrintOptions() "{{{
     echo "\n"
     " not a bug: it is normal if not all columns are used
 endfunc "}}}
-func! <SID>Switch(...) "{{{
+func! <SID>Switch(mode,...) "{{{
     " a:1 -- (boolean) redraw after showing help (internal use only)
     let recursive = a:0>=1 && a:1
     echo ":switch "
     let gotchar = getchar()
     let showhelp = gotchar=="\<F1>"
     let flag = nr2char(gotchar)
+    let map = s:map_keys[a:mode]
     if recursive
         if flag =~ "[:\<C-U>]"
             call feedkeys(":")
@@ -365,7 +370,7 @@ func! <SID>Switch(...) "{{{
         elseif flag =~ '\s'
             redraw
             return
-        elseif flag == "\<C-Q>"
+        elseif flag == eval('"'.'\'.map.'"')
             redraw
             call feedkeys("\<Plug>SwitchOption")
             return
@@ -387,7 +392,7 @@ func! <SID>Switch(...) "{{{
         return
     elseif flag =~ '\s'
         call Switch_PrintOptions()
-        call <SID>Switch(1)
+        call <SID>Switch(a:mode,1)
         return
     endif
     call s:DoOption(flag, showhelp)
@@ -446,10 +451,12 @@ func! s:DoOption(flag, showhelp) "{{{
 endfunc "}}}
 
 " {{{1 [cleaning]                 
-unlet g:switch_defaults
+unlet g:switch_default
 unlet g:switch_options
 unlet g:switch_help_header
 unlet g:switch_help_leftalign
+unlet g:switch_map_modes
+unlet g:switch_map_keys
 
 " {{{1 [modeline]                 
 " vim:set fen fdm=marker fdl=0 et: ;;edswitch
