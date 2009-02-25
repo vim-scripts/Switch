@@ -4,7 +4,7 @@
 "      license: GPL
 "     requires: Vim 7+
 "    script id: 2214
-"  last change: 2008 Jul 30
+"  last change: 2009 Feb 25
 "      creator: Tomas RC
 " co-developer: Andy Wokula   
 "      project: Univrc
@@ -92,11 +92,11 @@
 " Changed: All global variables are now converted to script-local variables.
 "
 " Changed: The  sections  were reorganized  a  bit.   All user  configurations,
-" except for the mapping keys, now lies in the [user config] section.
+" except for the mapping keys, now lies in the [configuration] section.
 "
         " }}}3
         " {{{3     2008 Jul 30       v. 0.12  
-" Added: Now the map keys can also be defined in the 'user config' section.
+" Added: Now the map keys can also be defined in the [configuration] section.
 " They can be easily defined in any of the following fashions: 
 "
 "    if !exists("g:switch_map_keys") 
@@ -109,6 +109,9 @@
 " Fixed: One global variable was not being removed.
 "
         " }}}3
+        " {{{3     2009 Feb 25       v. 0.13  
+" Changed: Small improvement on the options help table
+        " }}}3
 
     " {{{2 [documentation]            
 
@@ -120,17 +123,17 @@
 " How to use it
 "     Two lines quick guide
 "         * get help : <C-Q><Tab>
-"         * toggle : <C-Q>{key} | where key is a printable character 
+"         * toggle option: <C-Q>{char} | where char represents a boolean option  
 " 
 "     Five lines quick guide
 "         By default, the map key is  (<C-Q>). Following the map key, 
 "         * a character toggles the value of the boolean option it represents
-"         * <Tab> or <Space> prints the available key-option pairs
-"         * <F1> + character opens the help on the page of its pair option
+"         * <Tab> or <Space> prints the available char-option pairs
+"         * <F1> +  character opens the help page of its related option 
 "         * <Esc> escapes 
 " 
 " How to configure it
-"     All  user configurable  definitions are  present in  the 'user  config'
+"     All  user configurable  definitions are  present in  the [configuration]
 "     section and can be also defined in your .vimrc, if wanted:
 "     
 "             1. g:switch_options (string) Default : ""
@@ -191,7 +194,7 @@ if v:version < 700 || &cp
     finish
 endif
 
-" {{{1 [user config]              
+" {{{1 [configuration]            
 if !exists("g:switch_options")
     let g:switch_options = ""
 endif
@@ -220,7 +223,7 @@ if !exists("g:switch_default")
     let g:switch_default = 
             \ "A:autochdir, B:scrollbind, C:cursorcolumn, H:hidden"
             \.", I:infercase, L:cursorline, M:showmode, P:wrapscan"
-            \.", R:autoread, S:showcmd, W:autowrite, a:autoindent"
+            \.", S:showcmd, W:autowrite, a:autoindent"
             \.", b:linebreak, c:ignorecase, d:diff, e:expandtab, h:hlsearch"
             \.", i:incsearch, j:joinspaces, k:backup, l:list, m:modifiable"
             \.", n:number, p:paste, r:readonly, s:spell, w:wrap, z:lazyredraw"
@@ -293,7 +296,7 @@ func! Switch_PrintOptions() "{{{
     call s:GetUserSettings()
 
     let nentries = len(s:sys)
-    let maxoptlen = 2 + max(map(values(s:sys),'strlen(v:val)'))
+    let maxoptlen = 5 + max(map(values(s:sys),'strlen(v:val)'))
     let colwidth = 2 + 1 + 3 + maxoptlen + 2
     let ncolumns = (&columns-1) / colwidth
     if ncolumns > 0
@@ -345,8 +348,8 @@ func! Switch_PrintOptions() "{{{
         let cidx = lidx
         while cidx < nentries
             let entry = list[cidx]
-            let no = eval("&". entry[0]) ? "no" : "  "
-            let line .= printf(fmtstr, entry[1], no.entry[0].filler)
+            let status = eval("&". entry[0]) ? "[on] " : "     "
+            let line .= printf(fmtstr, entry[1], status.entry[0].filler)
             let cidx += nlines
         endwhile
         echo line
@@ -458,5 +461,5 @@ unlet g:switch_help_leftalign
 unlet g:switch_map_modes
 unlet g:switch_map_keys
 
-" {{{1 [modeline]                 
-" vim:set fen fdm=marker fdl=0 et: ;;edswitch
+
+" vim:set fen fdm=marker fdl=0 
