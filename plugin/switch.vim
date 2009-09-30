@@ -1,189 +1,45 @@
-"         name: Switch
-"      summary: Quickly toggle boolean options between 'on' and 'off'
-"      version: 0.12
-"      license: GPL
-"     requires: Vim 7+
-"    script id: 2214
-"  last change: 2009 Feb 25
-"      creator: Tomas RC
-" co-developer: Andy Wokula   
-"      project: Univrc
-"        email: univrc@gmail.com
-"         site: http://univrc.org/
-" 
-"          use: # get help : <C-Q><Tab>
-"               # toggle   : <C-Q>{key}
+" Vim plugin -- Quickly toggle boolean options
+" File:		switch.vim
+" Created:	2009 Jun 06
+" Last Change:	2009 Jun 11
+" Rev Days:	4
+" Author:	Andy Wokula <anwoku@yahoo.de>
+" Version:	1.00
+"		rewrite of v0.12 from 2008 Aug 08, by Tomas RC,
+"		univrc@gmail.com, http://univrc.org/
+" Dependencies: autoload/bbecho.vim
 
-" {{{1 [comments]                 
-    " {{{2 [changes]                  
-        " {{{3 2008 Jul 07  \A/  v. 0.10  
-"   Andy Wokula <anwoku@yahoo.de>
+" Usage: {{{
+"   Press  Ctrl-Q  to show the ":switch" prompt.  Possible arguments:
 "
-" Added: Added <C-Q><Tab>, which is more  intuitive.  If I look for completions
-" in the command-line I always try Tab and never Space.
+"   {optkey}		toggle an option value
+"   Tab			list option keys
+"   <Enter> {optkey}	open the help page of an option
+"   Ctrl-Q {optkey}	show the value of an option
+"   <F1>		print usage
 "
-" Added: accept a choice also when the  user forgets to release CTRL, first try
-" the lower then the upper case letter; doesn't work always, e.g. Ctrl-C always
-" breaks, Ctrl-I is like <Tab>; where  possible, conversion is done:  Ctrl-@ ->
-" "J".  Another problem: unwanted setting of "m" if Enter is pressed, therefore
-" convert Ctrl-M (Enter) to " ". Conversion to " " ignores a flag.
-"
-" Added: there are three places where options are remembered:
-" - the s:sys dictionary
-" - s:defaults (string) to remember defaults (does never change)
-" - g:switch_options (string) for user settings (to modify or replace defaults)
-"
-" Added: interface  mapping <Plug>SwitchOption  in case  the user  doesn't like
-" Ctrl-Q
-"
-" Added: after  printing help with <C-Q><Space>,  the screen is not  cleared if
-" the user continues  with Command-line mode (by typing ":"  or Ctrl-U to clear
-" ":switch").  Very  useful to  edit the g:switch_options  variable, or  to get
-" help  on an  option.   And it's  more  close  to the  behavior  of other  Vim
-" commands.  In this situation, both keys take precedence over <C-Q>: or <C-Q>u
-" mappings.
-"
-" Added: after printing help with <C-Q><Space>, another <C-Q> redraws and shows
-" the ":switch" prompt (instead of trying to set the "q" option).
-"
-" Added:  the  user  can  press  <F1>  to  get  help  on  an  option;  e.g.  to
-" get  help on  'expandtab' he  can  press <C-Q><F1>e  or <C-Q><Space><F1>e  or
-" <C-Q><F1><Space><F1>e; pressing  <F1> two times in  a row quits.  Ok,  now we
-" have a really big messy function <SID>Switch().
-"
-" Changed: massive change to the set of available default options:
-" -   removed   flags: D:digraph,   E:expandtab,   f:foldenable,   F:rightleft,
-" g:ignorecase, G:magic, K:writebackup, N:icon, O:confirm, o:readonly, t:title,
-" U:autoindent, u:secure, V:revins, v:visualbell
-" -   changed    flags:   a:showmatch->a:autoindent,   c:cindent->c:ignorecase,
-" e:errorbells->e:expandtab, r:ruler->r:readonly
-"
-" Changed:  now sets  the  local value  of  an option  (not  the global  value;
-" :setlocal sets the global value anyway if there is no local value)
-"
-" Changed: include the key that was rejected in the message
-"
-" Changed: now  uses the full screen  width to show available  options (several
-" columns)
-"
-" Changed: After pressing  <C-Q><Space>, don't  require another  <C-Q>, instead
-" show the :switch prompt immediately
-"
-" Fix: test for non-existant option names caused an error
-"
-" Fix: the  escape key  shouldn't give  an error (also  keys with  empty return
-" char)
-"
-" ... some more ...
-        " }}}3
-        " {{{3     2008 Jul 26       v. 0.11  
-" Added:  The switch functionality now  works, optionally, in visual and insert
-" modes as  well.  Note  that switch.vim  uses one  mapping for  each activated
-" mode.  The  default mapping key is  <C-Q> (Ctrl-q).  The mapping  keys can be
-" changed in  the [setting up]  -> [mappings]  section, in the  following three
-" lines:
-"          - nmap <silent> <C-Q> <Plug>SwitchOption
-"          - imap <silent> <C-Q> <Plug>SwitchOption
-"          - xmap <silent> <C-Q> <Plug>SwitchOption
-"           
-" Changed: In the listing, an option name is prepended with "no", if the option
-" is currently turned on and a key press will turn it off. (By Andy Wokula)
-"
-" Changed: All global variables are now converted to script-local variables.
-"
-" Changed: The  sections  were reorganized  a  bit.   All user  configurations,
-" except for the mapping keys, now lies in the [configuration] section.
-"
-        " }}}3
-        " {{{3     2008 Jul 30       v. 0.12  
-" Added: Now the map keys can also be defined in the [configuration] section.
-" They can be easily defined in any of the following fashions: 
-"
-"    if !exists("g:switch_map_keys") 
-"        let g:switch_map_keys  = {  'normal' : ""
-"                                 \, 'insert' : "<C-Q>"
-"                                 \, 'visual' : "_" }
-"
-" Thanks to godlygeek for the " eval('"'.'\'.map.'"') " solution.
-"
-" Fixed: One global variable was not being removed.
-"
-        " }}}3
-        " {{{3     2009 Feb 25       v. 0.13  
-" Changed: Small improvement on the options help table
-        " }}}3
+"   If the prompt changes to ":", you are back in Cmdline mode.  This
+"   happens after pressing ":", CTRL-U or Backspace.
 
-    " {{{2 [documentation]            
-
-" This plugin  enables you  to toggle  any Vim boolean  options between  'on' and
-" 'off' using just one key mapping for each working mode. That works, by default,
-" in three  different modes  (normal, visual  and insert),  using three  maps (if
-" free).
-" 
-" How to use it
-"     Two lines quick guide
-"         * get help : <C-Q><Tab>
-"         * toggle option: <C-Q>{char} | where char represents a boolean option  
-" 
-"     Five lines quick guide
-"         By default, the map key is  (<C-Q>). Following the map key, 
-"         * a character toggles the value of the boolean option it represents
-"         * <Tab> or <Space> prints the available char-option pairs
-"         * <F1> +  character opens the help page of its related option 
-"         * <Esc> escapes 
-" 
-" How to configure it
-"     All  user configurable  definitions are  present in  the [configuration]
-"     section and can be also defined in your .vimrc, if wanted:
-"     
-"             1. g:switch_options (string) Default : ""
-"             2. g:switch_help_header (boolean) Default : 1
-"             3. g:switch_help_leftalign (boolean) Default : 0
-"             4. g:switch_map_modes (dictionary) Default (value entry): 1 
-"             5. g:switch_map_keys (dictionary) Default (value entry): 1 
-"             6. g:switch_default (string)
+" }}}
+" Change Active Options: {{{
+" (1) create your own set of options:
+"	:let g:switch_options = "e:expandtab,l:list"
 "
-"         1. g:switch_options (string) Default: ""
-" 
-"             It  customizes the  existent  key-option pairs. It  can have  three
-"             different meanings:
-"                 * "" : Use the default set of key-option pairs
-"                 * "L:cursorline" : Use exclusively the two defined pairs
-"                 * "., l:list" : Use the default set (.) plus the two pairs. 
-" 
-"         Example: let g:switch_options = "., e:expandtab, k" 
-"         With ".," at  the begin, start with the  default set. Following entries
-"         either add/replace "key:option"  pairs or remove keys  if the ":option"
-"         part is missing. Separator is "," followed by optional white space. The
-"         example makes <C-Q>e toggle 'expandtab' and <C-Q>k raise an error. (bad
-"         example, "e" already is in the defaults).
-" 
-"         2. g:switch_help_header (boolean) Default: 1
-"             If on, show header lines. 
-" 
-"         3. g:switch_help_leftalign (boolean) Default: 0
-"             If off, make displaying the options look more like centering (about
-"             1/3 of white space before, 2/3 after).
-" 
-"         4. g:switch_map_modes (dictionary) Default (value entry): 1
-"             Define in which Vim modes the plugin will by operational Each entry
-"             key is a  Vim mode and each  value is a boolean  that authorizes or
-"             not the activation of pair mode.
-" 
-"         5. g:switch_map_keys (dictionary) Default (value entry): 1
-"             Define the mapping key for each of the three operating modes.
-" 
-"         6. g:switch_default (string) 
-"             Define the default pairs char:option.
+" (2) use default options, and remove or add keys:
+"	:let g:switch_options = ".,c,d,i:ignorecase"
+"   (variable must start with ".,")
 "
-" 
-" ? To see the list of the available boolean options type :set inv<C-D>
-" ! Lots of thanks to Andy Wokula, who made this humble plugin much nicer
-" @ This plugin is related to the Univrc project (http://univrc.org)
+" (3) go back to default options:
+"	:let g:switch_options = ""
+"
+" - each entry is {optkey}:{option}
+" - each {optkey} should be a single letter (not a multi-byte key)
+" NEW: white space between entries is not ignored, you can now use " " for
+"      {optkey}
+" }}}
 
-    "}}}2
-
-" {{{1 [script init]              
+" Script Init {{{
 if exists('loaded_switch')
     finish
 endif
@@ -194,7 +50,13 @@ if v:version < 700 || &cp
     finish
 endif
 
-" {{{1 [configuration]            
+let s:sav_cpo = &cpo
+set cpo&vim
+"}}}
+
+" Config Variables: {{{
+" All these variables can be changed during session!
+
 if !exists("g:switch_options")
     let g:switch_options = ""
 endif
@@ -207,259 +69,490 @@ if !exists("g:switch_help_leftalign")
     let g:switch_help_leftalign = 0
 endif
 
-if !exists("g:switch_map_modes")
-    let g:switch_map_modes = {  'normal' : 1
-                             \, 'insert' : 1
-                             \, 'visual' : 1 }
+if !exists("g:switch_non_bool")
+    let g:switch_non_bool = {}
+endif
+call extend(g:switch_non_bool, {
+    \ "ve_all": 'virtualedit value all',
+    \ "go_menu": 'guioptions flag m',
+    \ "tw_vimmail": "textwidth value 76 72",
+    \}, "keep")
+
+" g:switch_input_map
+"}}}
+
+" Mappings:  {{{
+if !hasmapto("<Plug>SwitchOption")
+    map  <unique> <C-Q> <Plug>SwitchOption
+    map! <unique> <C-Q> <Plug>SwitchOption
 endif
 
-if !exists("g:switch_map_keys") 
-    let g:switch_map_keys  = {  'normal' : "<C-Q>"
-                             \, 'insert' : "<C-Q>"
-                             \, 'visual' : "<C-Q>" }
-endif
+map		<Plug>SwitchOption <SID>swopt
+imap <script>	<Plug>SwitchOption <C-O><SID>swopt
+cmap <script>	<Plug>SwitchOption <C-\><C-N><SID>swopt
 
-if !exists("g:switch_default")
-    let g:switch_default = 
-            \ "A:autochdir, B:scrollbind, C:cursorcolumn, H:hidden"
-            \.", I:infercase, L:cursorline, M:showmode, P:wrapscan"
-            \.", S:showcmd, W:autowrite, a:autoindent"
-            \.", b:linebreak, c:ignorecase, d:diff, e:expandtab, h:hlsearch"
-            \.", i:incsearch, j:joinspaces, k:backup, l:list, m:modifiable"
-            \.", n:number, p:paste, r:readonly, s:spell, w:wrap, z:lazyredraw"
-endif
+noremap <script><silent> <SID>swopt <SID>:<C-U>call <SID>Switch()<CR>
+noremap <expr> <SID>: <sid>gvmap_mode()
+"}}}
 
-" {{{1 [setting up]               
-    " {{{2 [variables]                   
-let s:defaults       = g:switch_default
-let s:options        = g:switch_options
-let s:map_modes      = g:switch_map_modes
-let s:map_keys       = g:switch_map_keys 
-let s:help_header    = g:switch_help_header
-let s:help_leftalign = g:switch_help_leftalign
-" remember the previous g:switch_options value to avoid redundant updates:
+func! <sid>Switch() "{{{
+    call s:gvmap_restore()
+
+    call s:GetUserSettings()
+
+    let s:prompt = ":switch "
+    echo s:prompt
+    let s:displayed = 1
+    let sav_more = &more
+    set nomore
+    let state = "start"
+    while state != "end"
+	let [fa_input, char] = s:Input()
+	let [action, state] = s:Trans(state, fa_input)
+	call s:Do_{action}(char)
+    endwhile
+    let &more = sav_more
+
+    " workaround for display bug: do a redraw when toggling 've':
+    if mode() == "\<C-V>"
+	call feedkeys("oo", "n")
+    endif
+endfunc "}}}
+
+"" Mealy Stuff {{{
+" Finite Automaton (FA)
+"
+" states
+"   "start"	after CTRL-Q, waiting for {optkey} to toggle an option
+"   "help"	after CTRL-Q <Enter>, waiting for {optkey} to show help
+"   "get"	after CTRL-?, waiting for {optkey} to show the current value
+"   "end"	end state
+
+" INPUT FOR THE FA (fa_input)
+"		what the user typed:
+"   "option"	option key
+"   "complet"	tab or space
+"   "opthelp"	help key F1
+"   "optvalue"	key to show the value
+"   "colon"	:
+"   "back"	backspace
+"   "usage"
+"   "other"	any other key
+
+" actions
+"   "Toggle"	    toggle an option
+"   "HelpPrompt"    show help prompt
+"   "Help"	    do :h 'option'
+"   "PrintList"	    show list of switch options
+"   "Cmdline"	    goto to Cmdline mode
+"   "ShowValue"	    print option value
+"   "Quit"	    no-op (after pressing a key that does nothing)
+
+"}}}
+" s:Variables {{{
+
+" s:displayed	    1 nothing displayed, 2 option list, 3 usage (more are
+"		    possible: 5, 7, 11, 13, ...)
+"   If 1, :redraw (to avoid the hit-enter prompt), else don't :redraw (to
+"   keep lists displayed).  The idea is to do a :redraw if the same list is
+"   going to appear twice on screen, whereas option list and usage fit well
+"   together.
+
+" s:notesc
+let s:notesc = '\%(\\\@<!\%(\\\\\)*\)\@<='
+
+" default options
+let s:default_options =
+    \ "A:autochdir,B:scrollbind,C:cursorcolumn,H:hidden,I:infercase"
+    \.",L:cursorline,M:showmode,P:wrapscan,S:showcmd,W:autowrite"
+    \.",a:autoindent,b:linebreak,c:ignorecase,d:diff,e:expandtab,h:hlsearch"
+    \.",i:incsearch,j:joinspaces,k:backup,l:list,m:modifiable,g:{go_menu}"
+    \.",n:number,p:paste,r:readonly,s:spell,t:{tw_vimmail},v:{ve_all},w:wrap"
+    \.",z:lazyredraw"
 let s:old_options = "~(_8(I)"
- 
-    " {{{2 [mappings]                 
+"}}}
 
-if !hasmapto("<Plug>SwitchOption","nvic") 
-    if s:map_modes.normal == 1  
-        exe "nmap <silent> ".s:map_keys['normal']." <Plug>SwitchOption"
-    endif
-    if s:map_modes.insert == 1  
-        exe "imap <silent> ".s:map_keys['insert']." <Plug>SwitchOption"
-    endif
-    if s:map_modes.visual == 1  
-        exe "xmap <silent> ".s:map_keys['visual']." <Plug>SwitchOption"
-    endif
-
-    nnoremap <Plug>SwitchOption :<C-U>call <SID>Switch('normal')<CR>
-    inoremap <Plug>SwitchOption <C-O>:<C-U>call <SID>Switch('insert')<CR>
-    xnoremap <Plug>SwitchOption <ESC>:<C-U>call <SID>Switch('visual')<BAR>:normal gv<CR>
+" FA input map {{{
+" map keys typed by the user to input for the FA
+if !exists("g:switch_input_map")
+    let g:switch_input_map = {}
 endif
+call extend(g:switch_input_map, {
+    \ "\<F1>": "usage",
+    \ "\t": "complet", " ": "complet",
+    \ "?": "optvalue", "\<C-Q>": "optvalue",
+    \ "\r": "opthelp",
+    \ ":": "colon", "\<C-U>": "colon",
+    \ "\<BS>": "back",
+    \}, "keep")
+" }}}
+func! s:Input() "{{{
+    let chr = s:Getchar()
+    " if a letter is mapped for an option AND for an action, the option
+    " has precedence
+    if has_key(s:active_options, chr)
+	return ["option", chr]
+    endif
+    let fa_input = get(g:switch_input_map, chr, "")
+    if fa_input != ""
+	return [fa_input, chr]
+    endif
+    if chr =~ '^\w$'
+	" unmapped letter ... checked again later
+	return ["option", chr]
+    endif
 
-    " }}}2
+    let sav_dy = &dy
+    set display-=uhex
+    try
+	let tryctrl = tr(strtrans(chr),"@M","J ")
+	if strlen(tryctrl)==2 && tryctrl[0] == "^"
+	    let chr = tolower(tryctrl[1])
+	    if has_key(s:active_options, chr)
+		return ["option", chr]
+	    endif
+	    let chr = toupper(tryctrl[1])
+	    if has_key(s:active_options, chr)
+		return ["option", chr]
+	    endif
+	endif
+    finally
+	let &dy = sav_dy
+    endtry
 
-" {{{1 [functions]                
-func! s:GetUserSettings() "{{{
-    " if !exists("s:options")
-    "     let s:options = ""
-    " endif
-    if s:old_options == s:options
-        return
+    return ["other", chr]
+endfunc "}}}
+
+" FA Trans Table {{{
+let s:fa_table = {}
+let s:fa_table.start = {
+    \ "option": "Toggle end",
+    \ "complet": "PrintList start",
+    \ "usage": "Usage start",
+    \ "opthelp": "HelpPrompt help",
+    \ "optvalue": "GetPrompt get",
+    \ "back": "Cmdline end",
+    \}
+let s:fa_table.help = {
+    \ "option": "Help end",
+    \ "complet": "PrintList help",
+    \ "usage": "Usage help",
+    \ "optvalue": "GetPrompt get",
+    \ "back": "SwitchPrompt start",
+    \}
+let s:fa_table.get = {
+    \ "option": "ShowValue end",
+    \ "complet": "PrintList get",
+    \ "usage": "Usage get",
+    \ "opthelp": "HelpPrompt help",
+    \ "back": "SwitchPrompt start",
+    \}
+" }}}
+func! s:Trans(state, fa_input) "{{{
+    let trone = s:fa_table[a:state]
+    if has_key(trone, a:fa_input)
+	return split(trone[a:fa_input])
+    elseif a:fa_input == "colon"
+	return ["Cmdline", "end"]
     endif
-    let s:old_options = s:options
-    let s:sys = {}
-    let modify = s:options[0:1] == ".,"
-    if modify || s:options == ""
-        for flagmap in split(s:defaults, ',\s*')
-            let s:sys[flagmap[0]] = flagmap[2:]
-        endfor
-        if modify
-            let s:options = matchstr(s:options, '^\.,\s*\zs.*')
-        endif
+    return ["Quit", "end"]
+endfunc "}}}
+
+func! s:Getchar() "{{{
+    let chr = getchar()
+    return chr != 0 ? nr2char(chr) : chr
+endfunc "}}}
+func! s:Redraw(...) "{{{
+    if s:displayed == 1 || a:0 >= 1 && a:1
+	redraw
+	let s:displayed = 1
     endif
-    if s:options != ""
-        for flagmap in split(s:options, ',\s*')
-            if strlen(flagmap) >= 4
-                let s:sys[flagmap[0]] = flagmap[2:]
-            else
-                sil! unlet s:sys[flagmap[0]]
-            endif
-        endfor
+    " extra function, makes it easier to skip redrawing when :debugging
+endfunc "}}}
+
+" Actions:
+func! s:Do_Toggle(char) "{{{
+    let optname = get(s:active_options, a:char, "")
+    if optname == ""
+	call s:Warning('Key "%s" is not mapped', strtrans(a:char))
+    elseif optname =~ '^{\w\+}$'
+	call s:ToggleNonBoolean(matchstr(optname, '\w\+'))
+    elseif exists("+". optname)
+	call s:Redraw(1)
+	exec "setlocal" optname."!" optname."?"
+    else
+	call s:Warning("Not a working option: '%s'", optname)
     endif
-    if modify
-        let s:options = s:old_options
+endfunc "}}}
+func! s:Do_ShowValue(char) "{{{
+    let optname = get(s:active_options, a:char, "")
+    if optname == ""
+	return
+    elseif optname =~ '^{\w\+}$'
+	call s:ShowValueNonBoolean(matchstr(optname, '\w\+'))
+    elseif exists("+". optname)
+	call s:Redraw(1)
+	exec "setlocal" optname."?"
     endif
+endfunc "}}}
+func! s:Do_HelpPrompt(...) "{{{
+    call s:Redraw()
+    let s:prompt = ":switch help "
+    echo s:prompt
+endfunc "}}}
+func! s:Do_Help(char) "{{{
+    let optname = get(s:active_options, a:char, "")
+    if optname == ""
+	return
+    elseif optname =~ '^{\w\+}$'
+	call s:HelpNonBoolean(matchstr(optname, '\w\+'))
+    else
+	exec "help '". optname."'"
+    endif
+endfunc "}}}
+func! s:Do_PrintList(...) "{{{
+    " toggle display of options list
+    if s:displayed % 2 == 0
+	call s:Redraw(1)
+    else
+	if g:switch_help_header
+	    call s:HelpHeader()
+	endif
+	call Switch_PrintOptions()
+	let s:displayed = s:displayed * 2
+    endif
+    echo s:prompt
+endfunc "}}}
+func! s:Do_Cmdline(...) "{{{
+    call feedkeys(":")
+endfunc "}}}
+func! s:Do_GetPrompt(...) "{{{
+    call s:Redraw()
+    let s:prompt = ":switch value? "
+    echo s:prompt
+endfunc "}}}
+func! s:Do_Quit(...) "{{{
+    call s:Redraw(1)
+endfunc "}}}
+func! s:Do_SwitchPrompt(...) "{{{
+    " let s:displayed = 1
+    call s:Redraw()
+    let s:prompt = ":switch "
+    echo s:prompt
+endfunc "}}}
+func! s:Do_Usage(...) "{{{
+    " toggle display of usage
+    if s:displayed % 3 == 0
+	call s:Redraw(1)
+    else
+	call bbecho#Text(4, "[PreProc]Keys:[n]\n"
+	    \. "[Special]{optkey}[n]         toggle option value\n"
+	    \. "[Special]Tab[n]              print a list of option keys [Type]{optkey} : {option}[n]\n"
+	    \. "[Special]Enter {optkey}[n]   open the [Constant]help[n] page of an option\n"
+	    \. "[Special]? {optkey}[n]       show the [Constant]value[n] of an option\n"
+	    \. "[Special]CTRL-Q {optkey}[n]  dito\n"
+	    \. "[Special]:[n] or [Special]CTRL-U[n]      go to Command-line mode\n"
+	    \. "[Special]Backspace[n]        delete the last word"
+	    \)
+	echo "\n"
+	let s:displayed = s:displayed * 3
+    endif
+    echo s:prompt
+endfunc "}}}
+
+func! s:HelpHeader() "{{{
+    call bbecho#Line(4,
+	\  "[PreProc]Help:[n] Table columns display [Special]{optkey}[n] : {option}."
+	\. "  Press [Special]<F1>[n] for help on usage."
+	\. "  The list displays the current value of each option.")
+    echo "\n"
 endfunc "}}}
 func! Switch_PrintOptions() "{{{
     call s:GetUserSettings()
 
-    let nentries = len(s:sys)
-    let maxoptlen = 5 + max(map(values(s:sys),'strlen(v:val)'))
+    let nentries = len(s:active_options)
+    let maxoptlen = 2 + max(map(values(s:active_options),'strlen(v:val)'))
     let colwidth = 2 + 1 + 3 + maxoptlen + 2
     let ncolumns = (&columns-1) / colwidth
     if ncolumns > 0
-        let nlines = nentries / ncolumns + (nentries % ncolumns > 0)
-        if s:help_leftalign
-            let prewidth = 0
-        else
-            if nlines > 1
-                let ncolumns = nentries / nlines + (nentries % nlines > 0)
-                let prewidth = ((&columns-1) - ncolumns*colwidth) / 3
-            else
-                " the old setting, slightly wrong
-                let prewidth = (&columns-1) % colwidth / 3
-            endif
-        endif
-        let prespaces = repeat(" ", prewidth)
-        let fmtstr = "  %s : %.". maxoptlen. "s  "
+	let nlines = nentries / ncolumns + (nentries % ncolumns > 0)
+	if g:switch_help_leftalign
+	    let prewidth = 0
+	else
+	    if nlines > 1
+		let ncolumns = nentries / nlines + (nentries % nlines > 0)
+		let prewidth = ((&columns-1) - ncolumns*colwidth) / 3
+	    else
+		" the old setting, slightly wrong
+		let prewidth = (&columns-1) % colwidth / 3
+	    endif
+	endif
+	let prespaces = repeat(" ", prewidth)
+	let fmtstr = "  %s : %.". maxoptlen. "s  "
     else
-        let ncolumns = 1
-        let nlines = nentries
-        let prespaces = ""
-        let fmtstr = "%s : %.". maxoptlen. "s"
-    endif
-
-    if s:help_header
-        let headline = prespaces. "  Dictionary of boolean options  "
-        if strlen(headline) <= &columns - 1
-            echo prespaces. "  Get help: Press F1 {flag}"
-            echo "\n"
-        else
-            let headline = prespaces. "  Options  "
-        endif
-        echohl PreProc
-        echo headline
-        echohl none
-        echo "\n"
+	let ncolumns = 1
+	let nlines = nentries
+	let prespaces = ""
+	let fmtstr = "%s : %.". maxoptlen. "s"
     endif
 
     let list = []
-    for entry in items(s:sys)
-        call add(list, [entry[1], entry[0]])
+    for entry in items(s:active_options)
+	call add(list, [entry[1], entry[0]])
     endfor
     call sort(list)
 
     let filler = repeat(" ", maxoptlen)
     let lidx = 0
     while lidx < nlines
-        let line = prespaces
-        let cidx = lidx
-        while cidx < nentries
-            let entry = list[cidx]
-            let status = eval("&". entry[0]) ? "[on] " : "     "
-            let line .= printf(fmtstr, entry[1], status.entry[0].filler)
-            let cidx += nlines
-        endwhile
-        echo line
-        let lidx += 1
+	let line = prespaces
+	let cidx = lidx
+	while cidx < nentries
+	    let entry = list[cidx]
+	    let optn = entry[0]
+	    try
+		let no = optn=~'^{' || eval("&".optn) ? "  " : "no"
+	    catch
+		echohl ErrorMsg
+		echo "Unknown option:" optn
+		echohl None
+		let no = "! "
+	    endtry
+	    let line .= printf(fmtstr, entry[1], no.optn.filler)
+	    let cidx += nlines
+	endwhile
+	echo line
+	let lidx += 1
     endwhile
     echo "\n"
     " not a bug: it is normal if not all columns are used
 endfunc "}}}
-func! <SID>Switch(mode,...) "{{{
-    " a:1 -- (boolean) redraw after showing help (internal use only)
-    let recursive = a:0>=1 && a:1
-    echo ":switch "
-    let gotchar = getchar()
-    let showhelp = gotchar=="\<F1>"
-    let flag = nr2char(gotchar)
-    let map = s:map_keys[a:mode]
-    if recursive
-        if flag =~ "[:\<C-U>]"
-            call feedkeys(":")
-            return
-        elseif flag =~ '\s'
-            redraw
-            return
-        elseif flag == eval('"'.'\'.map.'"')
-            redraw
-            call feedkeys("\<Plug>SwitchOption")
-            return
-        endif
+
+func! s:GetUserSettings() "{{{
+    if s:old_options == g:switch_options
+	return
     endif
-    if showhelp
-        if !recursive
-            redraw
-        endif
-        echo ":switch help "
-        let flag = nr2char(getchar())
-        if recursive && flag =~ '\s'
-            redraw
-            return
-        endif
+    let s:old_options = g:switch_options
+    let s:active_options = {}
+    let modify = g:switch_options =~ '^\.,'
+    if modify || g:switch_options == ""
+	for flagmap in split(s:default_options, ',')
+	    let parsed = matchlist(flagmap, '^\(.[^:]*\):\(\a\{2,}\|{\w\+}\)')
+	    if !empty(parsed)
+		let s:active_options[parsed[1]] = parsed[2]
+	    endif
+	endfor
+	if modify
+	    let g:switch_options = substitute(g:switch_options, '^\.,','','')
+	endif
     endif
-    if flag == "" || flag == "\e"
-        redraw
-        return
-    elseif flag =~ '\s'
-        call Switch_PrintOptions()
-        call <SID>Switch(a:mode,1)
-        return
+    if g:switch_options != ""
+	for flagmap in split(g:switch_options, ',')
+	    let parsed = matchlist(flagmap, '^\(.[^:]*\):\(\a\{2,}\|{\w\+}\)')
+	    if !empty(parsed)
+		let s:active_options[parsed[1]] = parsed[2]
+	    else
+		let rmkey = matchstr(flagmap, '^.[^: \t]*')
+		sil! unlet s:active_options[rmkey]
+	    endif
+	endfor
     endif
-    call s:DoOption(flag, showhelp)
+    if modify
+	let g:switch_options = s:old_options
+    endif
 endfunc "}}}
-func! s:DoOption(flag, showhelp) "{{{
-    let flag = a:flag
-    call s:GetUserSettings()
+
+func! s:ToggleNonBoolean(refname) "{{{
+    if !has_key(g:switch_non_bool, a:refname)
+	" call s:Warning('g:switch_non_bool: Missing key "%s"', a:refname)
+        let g:switch_non_bool[a:refname] = "opt_dummy cmd_dummy val_dummy ..."
+    endif
+    let defstr = g:switch_non_bool[a:refname]
     try
-        let sav_dy = &dy
-        set display-=uhex
-        " strtrans() depends on 'display'
-        let optname = ""
-        if has_key(s:sys, flag)
-            let optname = s:sys[flag]
-        else
-            let tryctrl = tr(strtrans(flag),"@M","J ")
-            if strlen(tryctrl)==2 && tryctrl[0] == "^"
-                let flag = tolower(tryctrl[1])
-                if has_key(s:sys, flag)
-                    let optname = s:sys[flag]
-                else
-                    let flag = toupper(tryctrl[1])
-                    if has_key(s:sys, flag)
-                        let optname = s:sys[flag]
-                    else
-                        let flag = tolower(flag)
-                    endif
-                endif
-            endif
-        endif
-        if flag == " "
-            return
-        endif
-        redraw
-        if optname == ""
-            echohl WarningMsg
-            echomsg 'Switch: Key "'.strtrans(flag).'" not found in the boolean options dictionary!'
-            echohl none
-            return
-        endif
-        if exists("+". optname)
-            if a:showhelp
-                exec "help '". s:sys[flag]."'"
-            else
-                exec "setlocal" optname."!" optname."?"
-            endif
-        else
-            echohl WarningMsg
-            echo "Switch: Not a working option: '". optname. "'"
-            echohl none
-            return 1
-        endif
-    finally
-        let &dy = sav_dy
+	let [optname, cmd; values] = split(defstr, s:notesc.' ', 1)
+    catch
+	call s:Warning('g:switch_non_bool.%s must be "{opt} {cmd} {val} ..." ', a:refname)
+	return
     endtry
+    if !exists("+". optname)
+        call s:Warning("not a working option: '%s'", optname)
+        return
+    endif
+    if empty(values)
+        call s:Warning('g:switch_non_bool.%s needs some values to toggle', a:refname)
+        return
+    endif
+    let val0 = values[0]
+
+    if cmd ==? "value"
+	if type(eval("&". optname)) == 0
+	    call map(values, '0 + v:val')
+        elseif len(values) == 1
+            call add(values, "")
+	endif
+	let idx = index(values, eval("&". optname))
+	if idx >= 0
+	    exec "setl" optname."=". values[(idx+1) % len(values)]
+	else
+	    exec "setl" optname."=". val0
+	endif
+
+    elseif cmd ==? "flag"
+	if eval("&". optname) =~# val0
+	    exec "setl" optname."-=". val0
+	else
+	    exec "setl" optname."+=". val0
+	endif
+
+    else
+	call s:Warning('g:switch_non_bool.%s:'.
+	    \ ' replace "%s" with either "value" or "flag"', a:refname, cmd)
+	return
+
+    endif
+    call s:Redraw(1)
+    exec "setl" optname."?"
+endfunc "}}}
+func! s:ShowValueNonBoolean(refname) "{{{
+    if !has_key(g:switch_non_bool, a:refname)
+	" error
+	return
+    endif
+    let optname = split(g:switch_non_bool[a:refname])[0]
+    if exists("+". optname)
+	call s:Redraw(1)
+	exec "setl" optname."?"
+    endif
+endfunc "}}}
+func! s:HelpNonBoolean(refname) "{{{
+    if !has_key(g:switch_non_bool, a:refname)
+	" error
+	return
+    endif
+    let optname = split(g:switch_non_bool[a:refname])[0]
+    exec "help '". optname."'"
 endfunc "}}}
 
-" {{{1 [cleaning]                 
-unlet g:switch_default
-unlet g:switch_options
-unlet g:switch_help_header
-unlet g:switch_help_leftalign
-unlet g:switch_map_modes
-unlet g:switch_map_keys
+" from autoload/gvmap.vim
+func! <sid>gvmap_mode() "{{{
+    let s:lastmode = mode()
+    return ":"
+endfunc "}}}
+func! s:gvmap_restore() "{{{
+    if exists("s:lastmode") && s:lastmode =~ "[vV\<C-V>]"
+	normal! gv
+	unlet s:lastmode
+    endif
+endfunc "}}}
 
+func! s:Warning(fmt, ...) "{{{
+    echohl WarningMsg
+    echomsg "Switch:" call("printf", [a:fmt] + a:000)
+    echohl None
+endfunc "}}}
 
-" vim:set fen fdm=marker fdl=0 
+" Modeline: {{{1
+let &cpo = s:sav_cpo
+
+" press any key to continue, press any other key to quit
+" vim:set fdm=marker ts=8:

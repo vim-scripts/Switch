@@ -1,0 +1,174 @@
+*switch.txt*	Quick toggling of (boolean) options
+
+		For Vim version 7.0.  Last change: 2009 Jun 10
+		Original by Tomas RC <univrc@gmail.com>, http://univrc.org/
+		By Andy Wokula <anwoku@yahoo.de>
+
+                                                *switch* *switch.vim*
+|switch-usage| |switch-install| |switch-customize| |switch-history|
+==============================================================================
+INTRO
+
+==============================================================================
+USAGE						*switch-usage*
+
+Basic usage:
+
+<C-Q> {optkey}		Toggle an option.
+<C-Q> <Tab>		Print the options list.
+<C-Q> ? {optkey}	Print the current value of an option.
+<C-Q> <C-Q> {optkey}	Print the current value of an option.
+<C-Q> <CR> {optkey}	Invoke :help on an option.
+<C-Q> <F1>		Print help on usage, similar to this paragraph.
+
+Options are set with |:setlocal|.
+
+PREFIX KEY
+
+CTRL-Q (or <C-Q>) is the prefix key, it is the only key mapped by switch.  It
+is mapped for Normal, Insert, Visual and Command-line mode.  When the prefix
+key is pressed, a ":switch " prompt shows up and further input is fetched with
+getchar().  You can map a key to |<Plug>SwitchOption| to set another prefix
+key.
+
+OPTIONS LIST
+
+The list shows "{optkey} : option" mappings and the current value of each
+option.  If an option name is prepended with "no", the option is currently
+turned off.
+
+{optkey}-mappings can be changed with |g:switch_options|.
+
+A few options are enclosed with { }-parens.  These are links into the
+|g:switch_non_bool| dictionary to toggle number and string options.  For these
+options, the list doesn't show a hint about the current value, but <C-Q> ? and
+<C-Q> <CR> work.
+
+HITTING AN OPTKEY
+
+If you don't release CTRL when pressing {optkey}, switch will first try with a
+lowercase and then with an uppercase {optkey}.
+
+In error cases, switch will give a message, but not always:
+	(A) {optkey} not defined
+	(B) {option} not working
+        (C) {option} not boolean
+when toggling an option:  warning message about (A) and (B), |E488| for (C)
+when showing the value:	  no messages, (C) is not an error
+when invoking help:	  no message for (A), |E149| for (B), (C) is no error
+
+==============================================================================
+INSTALLATION				        *switch-install*
+
+Switch.vim is a plugin that comes in a zip archive with the following files:
+	plugin\switch.vim
+	doc\switch.txt
+	autoload\bbecho.vim	(:echo with color and margins)
+
+You can unpack the archive into one of the 'runtimepath' paths, e.g. (Win32)
+	~\vimfiles ~
+
+After unpacking, install this help file with >
+	:helptags ~\vimfiles\doc
+<
+More info in the help: |add-plugin|.
+
+==============================================================================
+CUSTOMIZATION				        *switch-customize*
+
+MAPPINGS
+						*<Plug>SwitchOption*
+You can define another prefix key.  The following is from the script: >
+	:map <C-Q> <Plug>SwitchPrompt
+	:map! <C-Q> <Plug>SwitchPrompt
+<
+If you define another key for <Plug>SwitchPrompt for one or more modes, CTRL-Q
+will not be mapped at all.
+
+(TODO)						?<Plug>SwitchLast?
+Repeat the last toggling.  No key mapped per default.
+
+VARIABLES
+
+The following variables can be set in the vimrc or during session.
+
+						*g:switch_options*
+This string variable maps keys to options, with a list of comma-separated
+{optkey}:{option} pairs.  {option} can be the name of a boolean option or a
+"{custom name}" for |g:switch_non_bool|.  There are three kinds of possible
+values:
+
+1. If empty (default), the hard-wired default set of options is used: >
+	:let g:switch_options = ""
+<
+   Press <C-V> <Tab> to see the defaults.
+
+2. If the value begins with ".," then items can be added, replaced or
+   removed: >
+        :let g:switch_options = ".,e:expandtab,k"
+
+<  This starts with the default set, adds "e:expandtab" and removes
+   "k:backup".
+
+3. The following defines a new set of options: >
+	:let g:switch_options = "e:expandtab,i:ignorecase"
+
+<  Only two keys will be available.
+
+Note: White space after commas is no longer ignored!
+Keys can only be single-byte chars, not key codes.  If you define a key more
+than one time, the last occurence will get precedence.
+
+
+SWITCH NON-BOOLEAN OPTIONS
+
+						*g:switch_non_bool*
+This dictionary maps a custom name to a string with a "command" that toggles a
+number or string option.  Commands:
+
+(1) Toggle between string or number values:
+	"{option} value {value1} {value2} ..." ~
+
+(2) Toggle a flag, for string options where :setl option+=... (and -=) can be
+    used:
+	"{option} flag {flag}" ~
+
+Items in the string are split at single spaces, no white space is ignored.
+Spaces can be escaped with '\'.
+
+Example:
+Make CTRL-Q_v toggle 'virtualedit' between "" and "all": >
+
+	:let g:switch_options = ".,v:{ve_all}"
+	:let g:switch_non_bool.ve_all = "virtualedit value all"
+
+The second value (omitted here) is assumed to be empty, thus a trailing space
+isn't needed.  Alternative: >
+	:let g:switch_non_bool.ve_all = "virtualedit flag all"
+as 've' can be toggled with :setl ve+=all and :setl ve-=all .
+
+						*g:switch_help_header*
+Display option (boolean): >
+	:let g:switch_help_header = 1
+If on, the option list incudes a header with some hints.
+
+						*g:switch_help_leftalign*
+Display option (boolean) >
+	:let g:switch_help_leftalign = 0
+If zero, display a more centered option list (about 1/3 of white space before,
+2/3 after).
+
+                                                *g:switch_input_map*
+Allows redefining usage.  Default value:
+        {" ": "complet", "\<C-Q>": "optvalue", "\<C-U>": "colon", ~
+        "\<Tab>": "complet", "\<F1>": "usage", "\<BS>": "back", ~
+        ":": "colon", "\<CR>": "opthelp", "?": "optvalue"} ~
+Switch adds missing entries at startup.  To disable <Space> in the vimrc: >
+        :let g:switch_input_map = {" ": ""}
+
+==============================================================================
+						*switch-history*	
+TODO
+
+==============================================================================
+vim:tw=78:fo=tcq2:sts=0:ts=8:sw=8:ft=help:fdm=marker:
